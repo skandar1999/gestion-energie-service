@@ -12,16 +12,16 @@ import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor	
 @Builder
 @Document(collection = "pompes")
 public class Pompe {
 
     @Id
     private String id;
-
     private String reference;
     private Double puissance;
-    private String statut; // ON / OFF
+    private String statut;
     private LocalDate dateMiseEnService;
 }
+

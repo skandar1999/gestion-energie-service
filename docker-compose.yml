@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  # Infrastructure
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=password
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - irrigation-network
+
+  mongodb-energie:
+    image: mongo:6
+    container_name: mongodb-energie
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_energie_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=gestion_energie
+    networks:
+      - irrigation-network
+
+  mongodb-eau:
+    image: mongo:6
+    container_name: mongodb-eau
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo_eau_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=gestion_eau
+    networks:
+      - irrigation-network
+
+  # Microservices
+  energie-service:
+    build: ./energie-service
+    container_name: energie-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb-energie:27017/gestion_energie
+    depends_on:
+      - rabbitmq
+      - mongodb-energie
+    networks:
+      - irrigation-network
+    restart: unless-stopped
+
+  eau-service:
+    build: ./eau-service
+    container_name: eau-service
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb-eau:27017/gestion_eau
+      - ENERGIE_SERVICE_URL=http://energie-service:8081
+    depends_on:
+      - rabbitmq
+      - mongodb-eau
+      - energie-service
+    networks:
+      - irrigation-network
+    restart: unless-stopped
+
+volumes:
+  rabbitmq_data:
+  mongo_energie_data:
+  mongo_eau_data:
+
+networks:
+  irrigation-network:
+    driver: bridge

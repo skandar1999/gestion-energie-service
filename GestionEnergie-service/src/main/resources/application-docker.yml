@@ -1,0 +1,21 @@
+spring:
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: admin
+    password: password
+  data:
+    mongodb:
+      uri: mongodb://mongodb-energie:27017/energie_db
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
